@@ -1,15 +1,11 @@
 # Импорт необходимых библиотек
-from flask import Flask, request, jsonify
+from flask import Flask
 import pandas as pd
 import numpy as np
 import os
 
 # Инициализация Flask
 app = Flask(__name__)
-
-# Пути к файлам
-folder_path = r"C:\Users\Umaro\OneDrive\Рабочий стол\viborka"
-csv_names = os.listdir(folder_path)
 
 """Данная функция обрабатывает данные из CSV-файла, выделяет определенные интервалы,
    выполняет вычисления и анализ нарушения устойчивости,
@@ -43,7 +39,8 @@ def pre_processing(csv_name, window_size):
                     'time': stability_fall_time,
                     'cont': contingency,
                     }
-    #Список с точками плюс минус ноль
+
+    #Список с точками плюс-минус ноль
     trans_list = []
 
     # Преобразуем полученные данные в датафрейм
@@ -67,14 +64,17 @@ def pre_processing(csv_name, window_size):
         if transient_init['t'].loc[index] - transient_init['t'].loc[index - 1] < 0.001:
             index_start = index
             trans_list.append(index_start)
+
     # Считаем необходимые данные
     transient = transient_init[index_start - left_border : index_start + right_border:]
     transient_56 = transient_init[index_start - left_border - 3 :index_start + right_border:]
-    # Избавляемся от плюс минус нуля
+
+    # Избавляемся от плюс-минус нуля
     if index_start in transient.index:
       transient = transient.drop(index_start)
     if index_start in transient_56.index:
       transient_56 = transient_56.drop(index_start)
+
     # Задаем новые индексы
     transient = transient.reset_index(drop=True)
     transient_56 = transient_56.reset_index(drop=True)
@@ -185,19 +185,18 @@ def data_graph(csv_name, window_size):
                                  on_bad_lines='warn',
                                  encoding='cp866')
     transient_init.columns = new_colon_name
-    #transient_init['t'] = pd.to_numeric(transient_init['t'], errors='coerce')
-    #transient_init['delta_1'] = pd.to_numeric(transient_init['delta_1'], errors='coerce')
-    #transient_init['delta_2'] = pd.to_numeric(transient_init['delta_2'], errors='coerce')
 
-    # Ищем индекс, который от которого будем вести отсчет, обозначет окончание возмущения
+    # Ищем индекс, который обозначает окончание возмущения
     for index, row in transient_init.iterrows():
         if index == 0:
             continue
         if transient_init['t'].loc[index] - transient_init['t'].loc[index - 1] < 0.001:
             index_start = index
             trans_list.append(index_start)
-            # Считаем необходимые данные
+
+    # Считаем необходимые данные
     transient = transient_init[index_start: index_start + right_border:]
+
     # Задаем новые индексы
     transient = transient.reset_index(drop=True)
 
@@ -212,7 +211,8 @@ def data_graph(csv_name, window_size):
 def get_graph(csv_names, window_size):
     result = pd.DataFrame()
     for i in range(0, len(csv_names)):
-        result = pd.concat([result, data_graph(csv_name=csv_names[i], window_size=window_size)], ignore_index=True)
+        result = pd.concat([result, data_graph(csv_name=csv_names[i], window_size=window_size)],
+                           ignore_index=True)
     return result
 
 # Функция для преобразования данных из CSV-файла
